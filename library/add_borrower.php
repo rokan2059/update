@@ -1,5 +1,34 @@
 <?php
-require_once "Database.php";
+// filepath: c:\xampp\htdocs\mylibrary\library\add_borrower.php
+require_once "CRUDOP.php";
+
+class Borrower {
+    private $db;
+
+    public function __construct() {
+        $this->db = new Database();
+    }
+
+    public function addBorrower($borrower_id, $name, $type, $phone_number) {
+        $stmt = $this->db->conn->prepare("INSERT INTO borrowers (borrower_id, name, type, phone_number) VALUES (?, ?, ?, ?)");
+        return $stmt->execute([$borrower_id, $name, $type, $phone_number]);
+    }
+}
+
+$borrower = new Borrower();
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $borrower_id = $_POST['borrower_id'];
+    $name = $_POST['name'];
+    $type = $_POST['type'];
+    $phone_number = $_POST['phone_number'];
+
+    if ($borrower->addBorrower($borrower_id, $name, $type, $phone_number)) {
+        echo "<script>alert('Borrower added successfully!'); window.location.href='borrower.php';</script>";
+    } else {
+        echo "<script>alert('Failed to add borrower. Please try again.');</script>";
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -7,7 +36,7 @@ require_once "Database.php";
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Library Management System</title>
+    <title>Add Borrower</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
 <body>
@@ -28,10 +57,10 @@ require_once "Database.php";
                     <a class="nav-link" href="books.php">Books Info</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="borrower.php">Borrowers</a>
+                    <a class="nav-link active" href="borrower.php">Borrowers</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="bookings.php">Bookings</a> <!-- New Button -->
+                    <a class="nav-link" href="bookings.php">Bookings</a> <!-- Added Bookings Button -->
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="logs.php">Logs</a>
@@ -54,8 +83,29 @@ require_once "Database.php";
 
 <!-- Main Content -->
 <div class="container mt-5">
-    <h2 class="text-center">Welcome to the Library Management System</h2>
-    <!-- Add your main content here -->
+    <h2 class="text-center">Add New Borrower</h2>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="borrower_id" class="form-label">Borrower ID:</label>
+            <input type="text" name="borrower_id" id="borrower_id" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="name" class="form-label">Name:</label>
+            <input type="text" name="name" id="name" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="type" class="form-label">Type:</label>
+            <select name="type" id="type" class="form-control" required>
+                <option value="Student">Student</option>
+                <option value="Teacher">Teacher</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="phone_number" class="form-label">Phone Number:</label>
+            <input type="text" name="phone_number" id="phone_number" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Borrower</button>
+    </form>
 </div>
 
 <!-- Footer -->

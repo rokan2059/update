@@ -1,9 +1,29 @@
 <?php
-// filepath: c:\xampp\htdocs\mylibrary\library\books.php
+// filepath: c:\xampp\htdocs\mylibrary\library\logs.php
 require_once "CRUDOP.php";
 
-$book = new Book();
-$books = $book->getBooks();
+class Logs {
+    private $db;
+
+    public function __construct() {
+        $this->db = new Database();
+    }
+
+    public function getLogs($type = null) {
+        if ($type) {
+            $stmt = $this->db->conn->prepare("SELECT * FROM logs WHERE type = ? ORDER BY date DESC");
+            $stmt->execute([$type]);
+        } else {
+            $stmt = $this->db->conn->prepare("SELECT * FROM logs ORDER BY date DESC");
+            $stmt->execute();
+        }
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+}
+
+$type = isset($_GET['type']) ? $_GET['type'] : null;
+$logs = new Logs();
+$logEntries = $logs->getLogs($type);
 ?>
 
 <!DOCTYPE html>
@@ -11,7 +31,7 @@ $books = $book->getBooks();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Books Info</title>
+    <title>Logs</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
 <body>
@@ -29,16 +49,16 @@ $books = $book->getBooks();
                     <a class="nav-link" href="index.php">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" href="books.php">Books Info</a>
+                    <a class="nav-link" href="books.php">Books Info</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="borrower.php">Borrowers</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="bookings.php">Bookings</a> <!-- Added Bookings Button -->
+                    <a class="nav-link" href="bookings.php">Bookings</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="logs.php">Logs</a>
+                    <a class="nav-link active" href="logs.php">Logs</a>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -58,37 +78,51 @@ $books = $book->getBooks();
 
 <!-- Main Content -->
 <div class="container mt-5">
-    <h2 class="text-center">Books Info</h2>
-    <a href="add_book.php" class="btn btn-primary mb-3">Add New Book</a>
+    <h2 class="text-center">Logs</h2>
+
+    <!-- Filter Form -->
+    <div class="mb-3">
+        <form method="GET" class="d-flex justify-content-end">
+            <select name="type" class="form-select w-auto me-2">
+                <option value="">All Transactions</option>
+                <option value="Incoming" <?= isset($_GET['type']) && $_GET['type'] === 'Incoming' ? 'selected' : '' ?>>Incoming</option>
+                <option value="Outgoing" <?= isset($_GET['type']) && $_GET['type'] === 'Outgoing' ? 'selected' : '' ?>>Outgoing</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Filter</button>
+        </form>
+    </div>
+
+    <!-- Logs Table -->
     <table class="table table-bordered">
-        <thead>
+        <thead class="table-dark">
             <tr>
                 <th>ID</th>
+                <th>Booking ID</th>
                 <th>Title</th>
-                <th>Author</th>
-                <th>Publish Year</th>
-                <th>Barcode</th>
-                <th>Onhand Quantity</th>
-                <th>Actions</th>
+                <th>Quantity</th>
+                <th>Type</th>
+                <th>Date</th>
             </tr>
         </thead>
         <tbody>
             <?php
-            if (empty($books)) {
-                echo "<tr><td colspan='7' class='text-center'>No books found</td></tr>";
+            if (empty($logEntries)) {
+                echo "<tr><td colspan='6' class='text-center'>No logs found</td></tr>";
             } else {
-                foreach ($books as $b) {
+                foreach ($logEntries as $log) {
+                    // Add a label for the transaction type
+                    $typeLabel = $log['type'] === 'Incoming' ? 
+                        "<span class='badge bg-success'>Incoming</span>" : 
+                        "<span class='badge bg-danger'>Outgoing</span>";
+
+                    // Display the logs with enhanced details
                     echo "<tr>
-                        <td>{$b['id']}</td>
-                        <td>{$b['title']}</td>
-                        <td>{$b['author']}</td>
-                        <td>{$b['publish_year']}</td>
-                        <td>{$b['barcode']}</td>
-                        <td>{$b['onhand_quantity']}</td>
-                        <td>
-                            <a href='edit_book.php?id={$b['id']}' class='btn btn-warning btn-sm'>Edit</a>
-                            <a href='delete_book.php?id={$b['id']}' class='btn btn-danger btn-sm'>Delete</a>
-                        </td>
+                        <td>{$log['id']}</td>
+                        <td>" . ($log['bookings_id'] ? "<a href='view_booking.php?id={$log['bookings_id']}'>#{$log['bookings_id']}</a>" : "N/A") . "</td>
+                        <td>{$log['title']}</td>
+                        <td>{$log['book_quantity']}</td>
+                        <td>{$typeLabel}</td>
+                        <td>{$log['date']}</td>
                     </tr>";
                 }
             }

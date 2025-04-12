@@ -8,9 +8,9 @@ if (isset($_SESSION['username'])) {
 $login = false;
 include('connection.php');
 if (isset($_POST['submit'])) {
-    $username = $_POST['user'];
-    $password = $_POST['pass'];
-    $captcha = $_POST['captcha'];
+    $username = mysqli_real_escape_string($conn, $_POST['user']);
+    $password = mysqli_real_escape_string($conn, $_POST['pass']);
+    $captcha = mysqli_real_escape_string($conn, $_POST['captcha']);
 
     // Validate CAPTCHA
     if ($captcha !== $_SESSION['captcha']) {
@@ -22,8 +22,14 @@ if (isset($_POST['submit'])) {
     }
 
     // Validate username and password
-    $sql = "SELECT * FROM signup WHERE username = '$username' OR email = '$username'";
+    $sql = "SELECT * FROM signup WHERE username = '$username'";
     $result = mysqli_query($conn, $sql);
+
+    // Check if the query failed
+    if (!$result) {
+        die("Error in query: " . mysqli_error($conn));
+    }
+
     $row = mysqli_fetch_array($result, MYSQLI_ASSOC);
 
     if ($row) {
@@ -66,8 +72,8 @@ include("navbar.php");
     <br><br>
     <div id="form">
         <h1 id="heading">Login Form</h1>
-        <form name="form" action="login.php" method="POST" required>
-            <label>Enter Username/Email: </label>
+        <form name="form" action="login.php" method="POST">
+            <label>Enter Username: </label>
             <input type="text" id="user" name="user" required></br></br>
 
             <label>Password: </label>
@@ -81,15 +87,11 @@ include("navbar.php");
 
             <input type="submit" id="btn" value="Login" name="submit"/>
         </form>
+        <br>
+        <!-- Forgot Password Button -->
+        <div class="text-center">
+            <button class="btn btn-outline-secondary" onclick="location.href='forgotp.php'" type="button">Forgot Password?</button>
+        </div>
     </div>
-    <script>
-        function isvalid() {
-            var user = document.form.user.value;
-            if (user.length == "") {
-                alert("Enter username or email id!");
-                return false;
-            }
-        }
-    </script>
 </body>
 </html>

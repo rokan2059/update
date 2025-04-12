@@ -1,5 +1,23 @@
 <?php
+// filepath: c:\xampp\htdocs\mylibrary\library\borrower.php
 require_once "Database.php";
+
+class Borrower {
+    private $db;
+
+    public function __construct() {
+        $this->db = new Database();
+    }
+
+    public function getBorrowers() {
+        $stmt = $this->db->conn->prepare("SELECT * FROM borrowers ORDER BY id DESC");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+}
+
+$borrower = new Borrower();
+$borrowers = $borrower->getBorrowers();
 ?>
 
 <!DOCTYPE html>
@@ -7,7 +25,7 @@ require_once "Database.php";
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Library Management System</title>
+    <title>Borrowers Management</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
 <body>
@@ -28,10 +46,10 @@ require_once "Database.php";
                     <a class="nav-link" href="books.php">Books Info</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="borrower.php">Borrowers</a>
+                    <a class="nav-link active" href="borrower.php">Borrowers</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="bookings.php">Bookings</a> <!-- New Button -->
+                    <a class="nav-link" href="bookings.php">Bookings</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="logs.php">Logs</a>
@@ -54,8 +72,41 @@ require_once "Database.php";
 
 <!-- Main Content -->
 <div class="container mt-5">
-    <h2 class="text-center">Welcome to the Library Management System</h2>
-    <!-- Add your main content here -->
+    <h2 class="text-center">Borrowers Management</h2>
+    <a href="add_borrower.php" class="btn btn-primary mb-3">Add New Borrower</a>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Borrower ID</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Phone Number</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            if (empty($borrowers)) {
+                echo "<tr><td colspan='6' class='text-center'>No borrowers found</td></tr>";
+            } else {
+                foreach ($borrowers as $b) {
+                    echo "<tr>
+                        <td>{$b['id']}</td>
+                        <td>{$b['borrower_id']}</td>
+                        <td>{$b['name']}</td>
+                        <td>{$b['type']}</td>
+                        <td>{$b['phone_number']}</td>
+                        <td>
+                            <a href='edit_borrower.php?id={$b['id']}' class='btn btn-warning btn-sm'>Edit</a>
+                            <a href='delete_borrower.php?id={$b['id']}' class='btn btn-danger btn-sm'>Delete</a>
+                        </td>
+                    </tr>";
+                }
+            }
+            ?>
+        </tbody>
+    </table>
 </div>
 
 <!-- Footer -->
